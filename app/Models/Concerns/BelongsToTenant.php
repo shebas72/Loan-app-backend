@@ -6,6 +6,10 @@ use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * @mixin \Illuminate\Database\Eloquent\Model
+ */
+
 trait BelongsToTenant
 {
     /**
