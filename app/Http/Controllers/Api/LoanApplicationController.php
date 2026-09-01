@@ -8,6 +8,9 @@ use App\Http\Requests\UpdateLoanApplicationRequest;
 use App\Http\Resources\LoanApplicationResource;
 use App\Models\LoanApplication;
 use Illuminate\Http\Request;
+use App\Enums\LoanStatus;
+use App\Http\Requests\TransitionLoanApplicationRequest;
+use App\Services\LoanTransitionService;
 
 class LoanApplicationController extends Controller
 {
@@ -60,4 +63,24 @@ class LoanApplicationController extends Controller
 
         return response()->json(null, 204);
     }
+    public function transition(
+    TransitionLoanApplicationRequest $request,
+    LoanApplication $loanApplication,
+    LoanTransitionService $service,
+) {
+    $this->authorize('update', $loanApplication);
+
+    try {
+        $loan = $service->transition(
+            $loanApplication,
+            LoanStatus::from($request->to_status),
+            $request->user(),
+            $request->comment,
+        );
+    } catch (\RuntimeException $e) {
+        return response()->json(['message' => $e->getMessage()], 422);
+    }
+
+    return new LoanApplicationResource($loan->load('applicant'));
+}
 }
