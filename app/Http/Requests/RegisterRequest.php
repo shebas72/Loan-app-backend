@@ -27,7 +27,7 @@ class RegisterRequest extends FormRequest
             'name' => ['required', 'string', 'max:191'],
             'email' => ['required', 'email', 'max:191', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::min(8)],
-            'role' => ['required', 'in:applicant,loan_officer,underwriter,branch_manager'],
+           
 
         ];
     }

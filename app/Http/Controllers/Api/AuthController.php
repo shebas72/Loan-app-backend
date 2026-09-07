@@ -18,7 +18,7 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => $request->password,
-            'role' => $request->role,
+            'role' => 'applicant',
         ]);
 
         $token = $user->createToken('api-token')->plainTextToken;
