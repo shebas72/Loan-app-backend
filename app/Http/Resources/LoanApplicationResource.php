@@ -25,6 +25,9 @@ class LoanApplicationResource extends JsonResource
                 'email' => $this->applicant->email,
             ],
             'documents_count' => $this->whenCounted('documents'),
+            'status_transitions' => StatusTransitionResource::collection(
+            $this->whenLoaded('statusTransitions')
+        ),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

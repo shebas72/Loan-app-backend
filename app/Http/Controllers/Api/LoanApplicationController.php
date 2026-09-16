@@ -43,7 +43,9 @@ class LoanApplicationController extends Controller
     {
         $this->authorize('view', $loanApplication);
 
-        return new LoanApplicationResource($loanApplication->load('applicant', 'documents'));
+        return new LoanApplicationResource(
+        $loanApplication->load('applicant', 'documents', 'statusTransitions.changedBy')
+    );
     }
 
     public function update(UpdateLoanApplicationRequest $request, LoanApplication $loanApplication)
