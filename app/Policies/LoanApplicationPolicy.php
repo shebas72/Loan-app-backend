@@ -42,6 +42,14 @@ class LoanApplicationPolicy
             && ($user->isRole('underwriter') || $user->isRole('branch_manager'));
     }
 
+    public function appeal(User $user, LoanApplication $loan): bool
+    {
+    return $user->tenant_id === $loan->tenant_id
+        && $user->isRole('applicant')
+        && $user->id === $loan->applicant_id
+        && $loan->status === 'rejected';
+   }
+
     public function delete(User $user, LoanApplication $loan): bool
     {
         return $user->tenant_id === $loan->tenant_id && $user->isRole('admin');

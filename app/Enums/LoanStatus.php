@@ -10,6 +10,7 @@ enum LoanStatus: string
     case Approved = 'approved';
     case Rejected = 'rejected';
     case Disbursed = 'disbursed';
+    case Appealed = 'appealed';
 
     public function allowedNextStates(): array
     {
@@ -17,8 +18,9 @@ enum LoanStatus: string
             self::Draft => [self::Submitted],
             self::Submitted => [self::UnderReview, self::Rejected],
             self::UnderReview => [self::Approved, self::Rejected],
+            self::Rejected => [self::Appealed],
+            self::Appealed => [self::UnderReview, self::Rejected],
             self::Approved => [self::Disbursed],
-            self::Rejected => [],
             self::Disbursed => [],
         };
     }

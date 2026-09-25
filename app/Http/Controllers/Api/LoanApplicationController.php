@@ -65,20 +65,22 @@ class LoanApplicationController extends Controller
 
         return response()->json(null, 204);
     }
-    public function transition(
+   
+   public function transition(
     TransitionLoanApplicationRequest $request,
-    LoanApplication $loanApplication,
+    LoanApplication $loan_application,
     LoanTransitionService $service,
 ) {
-    $this->authorize('update', $loanApplication);
+    $targetStatus = LoanStatus::from($request->to_status);
+
+    if ($targetStatus === LoanStatus::Appealed) {
+        $this->authorize('appeal', $loan_application);
+    } else {
+        $this->authorize('update', $loan_application);
+    }
 
     try {
-        $loan = $service->transition(
-            $loanApplication,
-            LoanStatus::from($request->to_status),
-            $request->user(),
-            $request->comment,
-        );
+        $loan = $service->transition($loan_application, $targetStatus, $request->user(), $request->comment);
     } catch (\RuntimeException $e) {
         return response()->json(['message' => $e->getMessage()], 422);
     }
