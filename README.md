@@ -63,11 +63,18 @@ php artisan key:generate
 Set your `.env` database credentials, then:
 
 ```bash
-php artisan migrate
+php artisan migrate --seed
 php artisan serve
 ```
 
 Backend runs at `http://127.0.0.1:8000`.
+
+The local seeder creates a Demo Bank tenant, three loan applications, and an applicant account:
+
+- Email: `demo.applicant@example.com`
+- Password: `DemoLoan2026!`
+
+Demo seed data is disabled in production. To add it to an existing local database, run `php artisan db:seed`.
 
 **⚠️ WAMP users:** WAMP's default MySQL/MariaDB storage engine is often `MyISAM`, not `InnoDB`. This breaks migrations with composite indexes (e.g. `failed_jobs`). Fix: in `config/database.php`, under the `mysql` connection array, set `'engine' => 'InnoDB'`. See [`TROUBLESHOOTING.md`](./TROUBLESHOOTING.md) for the full story.
 

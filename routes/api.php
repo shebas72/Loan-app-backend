@@ -12,11 +12,14 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::put('/me', [AuthController::class, 'updateProfile']);
+    Route::put('/me/password', [AuthController::class, 'updatePassword']);
     Route::apiResource('loan-applications', LoanApplicationController::class);
     Route::post('/loan-applications/{loan_application}/transition', [LoanApplicationController::class, 'transition']);
     Route::get('/tenants', [TenantController::class, 'index']);
     Route::get('/loan-applications/{loan_application}/documents', [DocumentController::class, 'index']);
 Route::post('/loan-applications/{loan_application}/documents', [DocumentController::class, 'store']);
+Route::get('/tenants/mine', [TenantController::class, 'mine']);
 });
 
 Route::get('/ping', function () {

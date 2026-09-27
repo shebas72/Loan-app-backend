@@ -2,24 +2,52 @@
 
 namespace Database\Seeders;
 
+use App\Models\LoanApplication;
+use App\Models\Tenant;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        if (app()->environment('production')) {
+            throw new \RuntimeException('Demo seed data must not be installed in production.');
+        }
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $tenant = Tenant::firstOrCreate(
+            ['slug' => 'demo-bank'],
+            ['name' => 'Demo Bank', 'is_active' => true],
+        );
+
+        $applicant = User::firstOrCreate(
+            ['email' => 'demo.applicant@example.com'],
+            [
+                'tenant_id' => $tenant->id,
+                'name' => 'Demo Applicant',
+                'password' => 'DemoLoan2026!',
+                'role' => 'applicant',
+            ],
+        );
+
+        $applications = [
+            ['amount' => 12500, 'purpose' => 'Home repairs', 'status' => 'draft'],
+            ['amount' => 8000, 'purpose' => 'Professional training', 'status' => 'submitted'],
+            ['amount' => 25000, 'purpose' => 'Used vehicle purchase', 'status' => 'under_review'],
+        ];
+
+        foreach ($applications as $application) {
+            LoanApplication::firstOrCreate(
+                [
+                    'tenant_id' => $tenant->id,
+                    'applicant_id' => $applicant->id,
+                    'purpose' => $application['purpose'],
+                ],
+                [
+                    'amount' => $application['amount'],
+                    'status' => $application['status'],
+                ],
+            );
+        }
     }
 }
