@@ -19,6 +19,7 @@ class LoanApplication extends Model
         'amount',
         'purpose',
         'status',
+        'assigned_to',
     ];
 
     protected function casts(): array
@@ -52,4 +53,9 @@ class LoanApplication extends Model
     {
         return $this->hasOne(CreditScoreResult::class);
     }
+
+    public function assignee(): BelongsTo
+{
+    return $this->belongsTo(User::class, 'assigned_to');
+}
 }

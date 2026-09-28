@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\LoanApplicationController;
 use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\DocumentController;
-
+use App\Http\Controllers\Api\StaffController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -20,6 +20,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/loan-applications/{loan_application}/documents', [DocumentController::class, 'index']);
 Route::post('/loan-applications/{loan_application}/documents', [DocumentController::class, 'store']);
 Route::get('/tenants/mine', [TenantController::class, 'mine']);
+Route::get('/staff', [StaffController::class, 'index']);
+Route::post('/staff', [StaffController::class, 'store']);
 });
 
 Route::get('/ping', function () {

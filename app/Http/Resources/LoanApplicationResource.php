@@ -24,6 +24,14 @@ class LoanApplicationResource extends JsonResource
                 'name' => $this->applicant->name,
                 'email' => $this->applicant->email,
             ],
+             // NEW: who has claimed this case (null if unclaimed)
+            'assignee' => $this->whenLoaded('assignee', fn () => $this->assignee
+                ? ['id' => $this->assignee->id, 'name' => $this->assignee->name]
+                : null),
+
+            // NEW: can the current user work this loan? Answered by the policy
+            'can_transition' => $request->user()?->can('update', $this->resource) ?? false,
+
             'documents_count' => $this->whenCounted('documents'),
             'status_transitions' => StatusTransitionResource::collection(
             $this->whenLoaded('statusTransitions')

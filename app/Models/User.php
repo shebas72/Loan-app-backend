@@ -49,4 +49,8 @@ class User extends Authenticatable
     {
         return $this->role === $role;
     }
+    public function isStaff(): bool
+{
+    return in_array($this->role, ['loan_officer', 'bank_admin'], true);
+}
 }

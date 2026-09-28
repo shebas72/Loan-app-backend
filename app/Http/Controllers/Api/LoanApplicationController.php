@@ -18,12 +18,19 @@ class LoanApplicationController extends Controller
     {
         $this->authorize('viewAny', LoanApplication::class);
 
-        $loans = LoanApplication::withCount('documents')
-            ->with('applicant')
-            ->latest()
-            ->paginate(15);
+        $query = LoanApplication::withCount('documents')->with('applicant', 'assignee');
 
-        return LoanApplicationResource::collection($loans);
+    if ($request->user()->isRole('applicant')) {
+        $query->where('applicant_id', $request->user()->id);
+    }
+
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    }
+
+    $loans = $query->latest()->paginate(15);
+
+    return LoanApplicationResource::collection($loans);
     }
 
     public function store(StoreLoanApplicationRequest $request)
@@ -44,8 +51,8 @@ class LoanApplicationController extends Controller
         $this->authorize('view', $loanApplication);
 
         return new LoanApplicationResource(
-        $loanApplication->load('applicant', 'documents', 'statusTransitions.changedBy')
-    );
+    $loanApplication->load('applicant', 'assignee', 'documents', 'statusTransitions.changedBy')
+);
     }
 
     public function update(UpdateLoanApplicationRequest $request, LoanApplication $loanApplication)
@@ -85,6 +92,6 @@ class LoanApplicationController extends Controller
         return response()->json(['message' => $e->getMessage()], 422);
     }
 
-    return new LoanApplicationResource($loan->load('applicant'));
+    return new LoanApplicationResource($loan->load('applicant', 'assignee'));
 }
 }
