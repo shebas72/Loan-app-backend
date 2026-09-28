@@ -22,7 +22,11 @@ class LoanApplicationPolicy
             return $user->id === $loan->applicant_id;
         }
 
-        return $user->isStaff();
+        if ($user->isRole('loan_officer')) {
+            return $this->isAssignee($user, $loan);
+        }
+
+        return $user->isRole('bank_admin');
     }
 
     public function create(User $user): bool
@@ -41,6 +45,19 @@ class LoanApplicationPolicy
         }
 
         return $this->canWork($user, $loan);
+    }
+
+    public function transition(User $user, LoanApplication $loan): bool
+    {
+        if ($user->tenant_id !== $loan->tenant_id) {
+            return false;
+        }
+
+        if ($user->isRole('applicant')) {
+            return $user->id === $loan->applicant_id && $loan->status === 'draft';
+        }
+
+        return $user->isRole('loan_officer') && $this->isAssignee($user, $loan);
     }
 
     public function approve(User $user, LoanApplication $loan): bool
@@ -66,20 +83,18 @@ class LoanApplicationPolicy
         return $user->tenant_id === $loan->tenant_id && $user->isRole('bank_admin');
     }
 
-    /**
-     * Bank admins can always work a case. Loan officers can work it
-     * only while it's unclaimed or claimed by them.
-     */
+    /** Bank admins can manage cases; loan officers can work only assigned cases. */
     protected function canWork(User $user, LoanApplication $loan): bool
     {
         if ($user->isRole('bank_admin')) {
             return true;
         }
 
-        if ($user->isRole('loan_officer')) {
-            return $loan->assigned_to === null || $loan->assigned_to === $user->id;
-        }
+        return $user->isRole('loan_officer') && $this->isAssignee($user, $loan);
+    }
 
-        return false;
+    protected function isAssignee(User $user, LoanApplication $loan): bool
+    {
+        return $loan->assigned_to !== null && (int) $loan->assigned_to === $user->id;
     }
 }

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Enums\LoanStatus;
 use App\Http\Requests\TransitionLoanApplicationRequest;
 use App\Services\LoanTransitionService;
+use Illuminate\Validation\Rule;
 
 class LoanApplicationController extends Controller
 {
@@ -22,6 +23,10 @@ class LoanApplicationController extends Controller
 
     if ($request->user()->isRole('applicant')) {
         $query->where('applicant_id', $request->user()->id);
+    }
+
+    if ($request->user()->isRole('loan_officer')) {
+        $query->where('assigned_to', $request->user()->id);
     }
 
     if ($request->filled('status')) {
@@ -72,6 +77,28 @@ class LoanApplicationController extends Controller
 
         return response()->json(null, 204);
     }
+
+    public function assign(Request $request, LoanApplication $loanApplication)
+    {
+        $this->authorize('assign', $loanApplication);
+
+        $validated = $request->validate([
+            'assigned_to' => [
+                'present',
+                'nullable',
+                Rule::exists('users', 'id')
+                    ->where('tenant_id', $request->user()->tenant_id)
+                    ->where('role', 'loan_officer')
+                    ->where('is_active', true),
+            ],
+        ]);
+
+        $loanApplication->update(['assigned_to' => $validated['assigned_to']]);
+
+        return new LoanApplicationResource(
+            $loanApplication->fresh()->load('applicant', 'assignee')
+        );
+    }
    
    public function transition(
     TransitionLoanApplicationRequest $request,
@@ -83,7 +110,7 @@ class LoanApplicationController extends Controller
     if ($targetStatus === LoanStatus::Appealed) {
         $this->authorize('appeal', $loan_application);
     } else {
-        $this->authorize('update', $loan_application);
+        $this->authorize('transition', $loan_application);
     }
 
     try {
