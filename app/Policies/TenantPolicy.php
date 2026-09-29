@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Models\Tenant;
 
 class TenantPolicy
 {
@@ -15,4 +16,19 @@ class TenantPolicy
     {
         return $user->role === 'admin';
     }
+
+    public function view(User $user, Tenant $tenant): bool
+{
+    return $user->role === 'admin';
+}
+
+public function update(User $user, Tenant $tenant): bool
+{
+    return $user->role === 'admin';
+}
+
+public function delete(User $user, Tenant $tenant): bool
+{
+    return $user->role === 'admin';
+}
 }

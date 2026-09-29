@@ -12,6 +12,10 @@ use App\Http\Resources\TenantOptionResource;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
 use App\Http\Resources\TenantResource;
+use App\Http\Requests\UpdateTenantRequest;
+use App\Http\Resources\StaffResource;
+use Illuminate\Validation\Rules\Password;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class TenantController extends Controller
 {
@@ -81,5 +85,100 @@ private function uniqueSlug(string $name): string
     }
 
     return $slug;
+}
+
+public function adminShow(Tenant $tenant)
+{
+    $this->authorize('view', $tenant);
+
+    $tenant->loadCount('users');
+
+    $usersByRole = $tenant->users()
+        ->selectRaw('role, count(*) as count')
+        ->groupBy('role')
+        ->pluck('count', 'role');
+
+    $loansByStatus = $tenant->loanApplications()
+        ->selectRaw('status, count(*) as count')
+        ->groupBy('status')
+        ->pluck('count', 'status');
+
+    $staff = $tenant->users()
+        ->whereIn('role', ['bank_admin', 'loan_officer'])
+        ->orderBy('role')
+        ->orderBy('name')
+        ->get();
+
+    return response()->json([
+        'data' => new TenantAdminResource($tenant),
+        'metrics' => [
+            'users_by_role' => $usersByRole,
+            'loans_by_status' => $loansByStatus,
+            'total_loans' => $tenant->loanApplications()->count(),
+        ],
+        'staff' => StaffResource::collection($staff),
+    ]);
+}
+
+public function update(UpdateTenantRequest $request, Tenant $tenant)
+{
+    $this->authorize('update', $tenant);
+
+    $tenant->update($request->validated());
+
+    return new TenantAdminResource($tenant->loadCount('users'));
+}
+
+public function updateStatus(Request $request, Tenant $tenant)
+{
+    $this->authorize('update', $tenant);
+
+    $validated = $request->validate(['is_active' => ['required', 'boolean']]);
+
+    $tenant->update(['is_active' => $validated['is_active']]);
+
+    if (! $tenant->is_active) {
+        PersonalAccessToken::where('tokenable_type', User::class)
+            ->whereIn('tokenable_id', $tenant->users()->pluck('id'))
+            ->delete();
+    }
+
+    return new TenantAdminResource($tenant->loadCount('users'));
+}
+
+public function destroy(Tenant $tenant)
+{
+    $this->authorize('delete', $tenant);
+
+    if ($tenant->loanApplications()->exists()) {
+        return response()->json([
+            'message' => 'This bank has loan applications on record and cannot be deleted. Suspend it instead.',
+        ], 422);
+    }
+
+    DB::transaction(function () use ($tenant) {
+        $tenant->users()->delete();
+        $tenant->delete();
+    });
+
+    return response()->noContent();
+}
+
+public function resetUserPassword(Request $request, Tenant $tenant, User $user)
+{
+    $this->authorize('update', $tenant);
+
+    if ($user->tenant_id !== $tenant->id) {
+        abort(404);
+    }
+
+    $validated = $request->validate([
+        'password' => ['required', 'confirmed', Password::min(8)],
+    ]);
+
+    $user->update(['password' => $validated['password']]);
+    $user->tokens()->delete();
+
+    return response()->json(['message' => "Password reset for {$user->name}."]);
 }
 }

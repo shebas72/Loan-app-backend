@@ -31,6 +31,11 @@ Route::patch('/staff/{staff}/status', [StaffController::class, 'updateStatus']);
 Route::delete('/staff/{staff}', [StaffController::class, 'destroy']);
 Route::get('/admin/tenants', [TenantController::class, 'adminIndex']);
 Route::post('/admin/tenants', [TenantController::class, 'store']);
+Route::get('/admin/tenants/{tenant}', [TenantController::class, 'adminShow']);
+Route::patch('/admin/tenants/{tenant}', [TenantController::class, 'update']);
+Route::patch('/admin/tenants/{tenant}/status', [TenantController::class, 'updateStatus']);
+Route::delete('/admin/tenants/{tenant}', [TenantController::class, 'destroy']);
+Route::post('/admin/tenants/{tenant}/users/{user}/reset-password', [TenantController::class, 'resetUserPassword']);
 });
 
 Route::get('/ping', function () {

@@ -51,6 +51,12 @@ class AuthController extends Controller
             ], 403);
         }
 
+        if ($user->tenant_id && $user->tenant && ! $user->tenant->is_active) {
+    return response()->json([
+        'message' => 'This bank has been suspended. Please contact the platform administrator.',
+    ], 403);
+}
+
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
